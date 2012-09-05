@@ -1,0 +1,26 @@
+OASISFormat: 0.2
+Name:        xenstore_clients
+Version:     0.9-dev
+Synopsis:    Unix tools for accessing xenstore
+Authors:     Dave Scott
+License:     LGPL-2.1 with OCaml linking exception
+Plugins:     META (0.2)
+BuildTools:  ocamlbuild
+
+Executable xs
+  CompiledObject:     best
+  Build$:             flag(unix)
+  Path:               cli
+  MainIs:             xs_client_cli.ml
+  Custom:             true
+  Install:            false
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore.unix
+
+Executable xsbench
+  CompiledObject:     best
+  Build$:             flag(unix)
+  Path:               bench
+  MainIs:             xs_bench.ml
+  Custom:             true
+  Install:            false
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore.unix
