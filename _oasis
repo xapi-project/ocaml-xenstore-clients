@@ -9,7 +9,6 @@ BuildTools:  ocamlbuild
 
 Executable xs
   CompiledObject:     best
-  Build$:             flag(unix)
   Path:               cli
   MainIs:             xs_client_cli.ml
   Custom:             true
@@ -18,7 +17,6 @@ Executable xs
 
 Executable xsbench
   CompiledObject:     best
-  Build$:             flag(unix)
   Path:               bench
   MainIs:             xs_bench.ml
   Custom:             true
