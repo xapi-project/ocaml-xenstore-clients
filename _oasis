@@ -7,13 +7,20 @@ License:     LGPL-2.1 with OCaml linking exception
 Plugins:     META (0.2)
 BuildTools:  ocamlbuild
 
+Library xenstore_client_unix
+  CompiledObject:     best
+  Path:               lib
+  Findlibname:        xenstore_client_unix
+  Modules:            Xs_transport_unix_client
+  BuildDepends:       lwt, xenstore
+
 Executable xs
   CompiledObject:     best
   Path:               cli
   MainIs:             xs_client_cli.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore.unix
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_client_unix
 
 Executable xsbench
   CompiledObject:     best
@@ -21,4 +28,4 @@ Executable xsbench
   MainIs:             xs_bench.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore.unix
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_client_unix
