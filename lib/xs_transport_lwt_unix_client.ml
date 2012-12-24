@@ -19,7 +19,7 @@ open Lwt
 let xenstored_socket = ref "/var/run/xenstored/socket"
 
 (* Individual connections *)
-type t = Lwt_unix.file_descr * Lwt_unix.sockaddr
+type channel = Lwt_unix.file_descr * Lwt_unix.sockaddr
 let create () =
   let sockaddr = Lwt_unix.ADDR_UNIX(!xenstored_socket) in
   let fd = Lwt_unix.socket Lwt_unix.PF_UNIX Lwt_unix.SOCK_STREAM 0 in
@@ -32,3 +32,7 @@ let write (fd, _) bufs ofs len =
 	if n <> len then begin
 		fail End_of_file
 	end else return ()
+
+type 'a t = 'a Lwt.t
+let return = Lwt.return
+let ( >>= ) = Lwt.bind

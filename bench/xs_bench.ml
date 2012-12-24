@@ -14,7 +14,7 @@
 
 open Lwt
 open Xs_protocol
-module Client = Xs_client.Client(Xs_transport_unix_client)
+module Client = Xs_client.Client(Xs_transport_lwt_unix_client)
 open Client
 
 let ( |> ) a b = b a
@@ -472,7 +472,7 @@ let main () =
 		!result, args in
 	let path, args = extract args "-path" in
 	begin match path with
-	| Some path -> Xs_transport_unix_client.xenstored_socket := path
+	| Some path -> Xs_transport_lwt_unix_client.xenstored_socket := path
 	| None -> ()
 	end;
 	let n, args = extract args "-n" in
