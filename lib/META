@@ -1,12 +1,33 @@
 # OASIS_START
-# DO NOT EDIT (digest: d7b5cf3121b914a0ab126b652685e64f)
+# DO NOT EDIT (digest: 7a381a4eed7066fa8b7655f82976011b)
 version = "0.9-dev"
 description = "Unix tools for accessing xenstore"
-requires = "lwt xenstore"
-archive(byte) = "xenstore_transport_lwt_unix.cma"
-archive(byte, plugin) = "xenstore_transport_lwt_unix.cma"
-archive(native) = "xenstore_transport_lwt_unix.cmxa"
-archive(native, plugin) = "xenstore_transport_lwt_unix.cmxs"
-exists_if = "xenstore_transport_lwt_unix.cma"
+requires = "xenstore"
+archive(byte) = "xenstore_transport.cma"
+archive(byte, plugin) = "xenstore_transport.cma"
+archive(native) = "xenstore_transport.cmxa"
+archive(native, plugin) = "xenstore_transport.cmxs"
+exists_if = "xenstore_transport.cma"
+package "unix" (
+ version = "0.9-dev"
+ description = "Unix tools for accessing xenstore"
+ requires = "unix xenstore"
+ archive(byte) = "xenstore_transport_unix.cma"
+ archive(byte, plugin) = "xenstore_transport_unix.cma"
+ archive(native) = "xenstore_transport_unix.cmxa"
+ archive(native, plugin) = "xenstore_transport_unix.cmxs"
+ exists_if = "xenstore_transport_unix.cma"
+)
+
+package "lwt" (
+ version = "0.9-dev"
+ description = "Unix tools for accessing xenstore"
+ requires = "lwt xenstore"
+ archive(byte) = "xenstore_transport_lwt_unix.cma"
+ archive(byte, plugin) = "xenstore_transport_lwt_unix.cma"
+ archive(native) = "xenstore_transport_lwt_unix.cmxa"
+ archive(native, plugin) = "xenstore_transport_lwt_unix.cmxs"
+ exists_if = "xenstore_transport_lwt_unix.cma"
+)
 # OASIS_STOP
 

@@ -14,23 +14,21 @@
 
 (** A byte-level transport over the xenstore Unix domain socket *)
 
-open Lwt
-
 (* Individual connections *)
-type channel = Lwt_unix.file_descr * Lwt_unix.sockaddr
+type channel = Unix.file_descr * Unix.sockaddr
 let create () =
-  let sockaddr = Lwt_unix.ADDR_UNIX(!Xs_transport.xenstored_socket) in
-  let fd = Lwt_unix.socket Lwt_unix.PF_UNIX Lwt_unix.SOCK_STREAM 0 in
-  lwt () = Lwt_unix.connect fd sockaddr in
-  return (fd, sockaddr)
-let destroy (fd, _) = Lwt_unix.close fd
-let read (fd, _) = Lwt_unix.read fd
+  let sockaddr = Unix.ADDR_UNIX(!Xs_transport.xenstored_socket) in
+  let fd = Unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  Unix.connect fd sockaddr;
+  fd, sockaddr
+let destroy (fd, _) = Unix.close fd
+let read (fd, _) = Unix.read fd
 let write (fd, _) bufs ofs len =
-	lwt n = Lwt_unix.write fd bufs ofs len in
+	let n = Unix.write fd bufs ofs len in
 	if n <> len then begin
-		fail End_of_file
-	end else return ()
+		raise End_of_file
+	end
 
-type 'a t = 'a Lwt.t
-let return = Lwt.return
-let ( >>= ) = Lwt.bind
+type 'a t = 'a
+let return x = x
+let ( >>= ) f x = f x
