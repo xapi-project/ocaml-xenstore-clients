@@ -31,4 +31,4 @@ let write (fd, _) bufs ofs len =
 
 type 'a t = 'a
 let return x = x
-let ( >>= ) f x = f x
+let ( >>= ) x f = f x
