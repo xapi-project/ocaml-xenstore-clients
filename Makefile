@@ -1,7 +1,7 @@
 .PHONY: all clean install build
 all: build doc
 
-NAME=xenstore
+NAME=xenstore_transport
 J=4
 
 export OCAMLRUNPARAM=b
