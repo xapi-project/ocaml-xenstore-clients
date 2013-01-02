@@ -20,7 +20,7 @@ Library xenstore_transport_lwt_unix
   Findlibname:        lwt
   Findlibparent:      xenstore_transport
   Modules:            Xs_transport_lwt_unix_client
-  BuildDepends:       lwt, xenstore
+  BuildDepends:       lwt, xenstore, xenstore_transport
 
 Library xenstore_transport_unix
   CompiledObject:     best
@@ -28,7 +28,7 @@ Library xenstore_transport_unix
   Findlibname:        unix
   Findlibparent:      xenstore_transport
   Modules:            Xs_transport_unix_client
-  BuildDepends:       unix, xenstore
+  BuildDepends:       unix, xenstore, xenstore_transport
 
 Executable xs
   CompiledObject:     best
