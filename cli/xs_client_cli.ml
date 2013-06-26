@@ -14,7 +14,7 @@
 
 open Lwt
 open Xs_protocol
-module Client = Xs_client.Client(Xs_transport_lwt_unix_client)
+module Client = Xs_client_lwt.Client(Xs_transport_lwt_unix_client)
 open Client
 
 let ( |> ) a b = b a
@@ -170,7 +170,7 @@ let main () =
 	match args with
 	| [ "read"; key ] ->
 		lwt client = make () in
-			with_xs client
+			immediate client
 				(fun xs ->
 					lwt () = do_restrict xs in
 					lwt v = read xs key in
@@ -178,7 +178,7 @@ let main () =
 				) >> return ()
     | [ "directory"; key ] ->
 		lwt client = make () in
-		with_xs client
+		immediate client
 			(fun xs ->
 				lwt () = do_restrict xs in
 				lwt ls = directory xs key in
@@ -192,7 +192,7 @@ let main () =
 		with Invalid_expression as e ->
 			Lwt_io.write Lwt_io.stderr "Invalid expression; expected <key=val> [and key=val]*\n" >> raise_lwt e in
 			lwt client = make () in
-			with_xs client
+			immediate client
 			(fun xs ->
 				lwt () = do_restrict xs in
 				Lwt_list.iter_s (fun (k, v) -> write xs k v) items
@@ -200,7 +200,7 @@ let main () =
 		end
 	| "debug" :: cmd_args ->
 		lwt client = make () in
-		with_xs client
+		immediate client
 			(fun xs ->
 				lwt () = do_restrict xs in
 				lwt results = debug xs cmd_args in
