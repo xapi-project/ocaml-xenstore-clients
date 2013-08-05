@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: e732b5108417399afe878417e030b545)
-version = "0.9-dev"
+# DO NOT EDIT (digest: 5e6d2295231345da93c6feef87dc659d)
+version = "0.9.0"
 description = "Unix tools for accessing xenstore"
 requires = "xenstore"
 archive(byte) = "xenstore_transport.cma"
@@ -9,7 +9,7 @@ archive(native) = "xenstore_transport.cmxa"
 archive(native, plugin) = "xenstore_transport.cmxs"
 exists_if = "xenstore_transport.cma"
 package "unix" (
- version = "0.9-dev"
+ version = "0.9.0"
  description = "Unix tools for accessing xenstore"
  requires = "unix xenstore xenstore_transport"
  archive(byte) = "xenstore_transport_unix.cma"
@@ -20,7 +20,7 @@ package "unix" (
 )
 
 package "lwt" (
- version = "0.9-dev"
+ version = "0.9.0"
  description = "Unix tools for accessing xenstore"
  requires = "lwt lwt.unix xenstore xenstore_transport"
  archive(byte) = "xenstore_transport_lwt_unix.cma"

@@ -14,7 +14,7 @@
 
 open Lwt
 open Xs_protocol
-module Client = Xs_client.Client(Xs_transport_lwt_unix_client)
+module Client = Xs_client_lwt.Client(Xs_transport_lwt_unix_client)
 open Client
 
 let ( |> ) a b = b a
@@ -23,12 +23,12 @@ let ( |> ) a b = b a
 let prefix = "/bench"
 
 let getdomainpath domid client =
-	lwt dom_path = with_xs client (fun xs -> getdomainpath xs domid) in
+	lwt dom_path = immediate client (fun xs -> getdomainpath xs domid) in
 	return (prefix ^ dom_path)
 
 let readdir d client =
 	try_lwt
-		with_xs client (fun xs -> directory xs d)
+		immediate client (fun xs -> directory xs d)
 	with Xs_protocol.Enoent _ ->
 		return []
 
@@ -114,7 +114,7 @@ let list_frontends domid client =
 					   device [devid] *)
 					let frontend = { domid = domid; kind = k; devid = devid } in
 					try_lwt
-						with_xs client
+						immediate client
 							(fun xs ->
 								lwt x = read xs (Printf.sprintf "%s/%d/backend" dir devid) in
 								match parse_backend_link x with
@@ -162,7 +162,7 @@ let hard_shutdown_request (x: device) client =
 	lwt backend_path = backend_path_of_device x client in
 	lwt frontend_path = frontend_path_of_device x client in
 	let online_path = backend_path ^ "/online" in
-	with_xs client
+	immediate client
 		(fun xs ->
 			lwt () = write xs online_path "0" in
 			lwt () = rm xs frontend_path in
@@ -188,7 +188,7 @@ let get_private_data_path_of_device (x: device) =
 	Printf.sprintf "%s/private/%s/%d" (get_private_path x.frontend.domid) (string_of_kind x.backend.kind) x.backend.devid
 
 let rm_device_state (x: device) client =
-	with_xs client
+	immediate client
 		(fun xs ->
 			lwt fe = frontend_path_of_device x client in
 			lwt be = backend_path_of_device x client in
@@ -211,7 +211,7 @@ let add device client =
 	lwt backend_path = backend_path_of_device device client in
 	let hotplug_path = get_hotplug_path device in
 	let private_data_path = get_private_data_path_of_device device in
-	lwt () = with_xst client
+	lwt () = transaction client
 		(fun xs ->
 			lwt _ = exists (Printf.sprintf "/local/domain/%d/vm" device.backend.domid) xs in
 			lwt _ = exists frontend_path xs in
@@ -263,14 +263,14 @@ let make domid client =
 	let roperm = Xs_protocol.ACL.({owner = 0; other = NONE; acl = [ domid, READ ]}) in
 	let rwperm = Xs_protocol.ACL.({owner = domid; other = NONE; acl = []}) in
 	lwt () =
-		with_xst client
+		transaction client
 			(fun xs ->
 				(* Clear any existing rubbish in xenstored *)
 				lwt () = try_lwt lwt _ = rm xs dom_path in return () with _ -> return () in
 				lwt () = mkdir xs dom_path in
 				lwt () = setperms xs dom_path roperm in
 				(* The /vm path needs to be shared over a localhost migrate *)
-				lwt vm_exists = with_xs client (exists vm_path) in
+				lwt vm_exists = immediate client (exists vm_path) in
 				lwt () = if not vm_exists then begin
 					lwt () = mkdir xs vm_path in
 					lwt () = setperms xs vm_path roperm in
@@ -301,7 +301,7 @@ let make domid client =
 				) [ "device"; "error"; "drivers"; "control"; "attr"; "data"; "messages"; "vm-data" ] in
 				return ()
 		) in
-	lwt () = with_xs client
+	lwt () = immediate client
 		(fun xs ->
 
 			lwt () = Lwt_list.iter_s (fun (x, y) -> write xs (dom_path ^ "/" ^ x) y) xsdata in
@@ -334,10 +334,10 @@ let shutdown domid req client =
 	let reason = string_of_shutdown_reason req in
 	lwt path = control_shutdown domid client in
 	lwt dom_path = getdomainpath domid client in
-	with_xst client
+	transaction client
 		(fun xs ->
 			(* Fail if the directory has been deleted *)
-			lwt domain_exists = with_xs client (exists dom_path) in
+			lwt domain_exists = immediate client (exists dom_path) in
 			if domain_exists then begin
 				lwt () = write xs path reason in
 				return true
@@ -356,11 +356,11 @@ let destroy domid client =
 			Device.hard_shutdown device client
 		) all_devices in
 	(* Remove our reference to the /vm/<uuid> directory *)
-	lwt vm_path = with_xs client (read_opt (dom_path ^ "/vm")) in
-	lwt vss_path = with_xs client (read_opt (dom_path ^ "/vss")) in
+	lwt vm_path = immediate client (read_opt (dom_path ^ "/vm")) in
+	lwt vss_path = immediate client (read_opt (dom_path ^ "/vss")) in
 	lwt () = begin match vm_path with
 		| Some vm_path ->
-			with_xs client
+			immediate client
 				(fun xs ->
 					lwt () = rm xs (vm_path ^ "/domains/" ^ (string_of_int domid)) in
 					lwt domains = readdir (vm_path ^ "/domains") client in
@@ -374,12 +374,12 @@ let destroy domid client =
 				)
 		| None -> return ()
 	end in
-	lwt () = with_xs client (fun xs -> rm xs dom_path) in
+	lwt () = immediate client (fun xs -> rm xs dom_path) in
 	lwt backend_path = getdomainpath 0 client >|= (fun x -> x ^ "/backend") in
 	lwt all_backend_types = readdir backend_path client in
 	lwt () = Lwt_list.iter_s
 		(fun ty ->
-			with_xs client (fun xs -> rm xs (Printf.sprintf "%s/%s/%d" backend_path ty domid))
+			immediate client (fun xs -> rm xs (Printf.sprintf "%s/%s/%d" backend_path ty domid))
 		) all_backend_types in
 	return ()
 end
@@ -425,7 +425,7 @@ let query m n client =
 	lwt () = for_lwt i = 0 to m do
 		Lwt_list.iter_p
 		(fun domid ->
-			with_xs client (fun xs -> lwt _ = read xs (Printf.sprintf "%s/local/domain/%d/name" prefix domid) in return ())
+			immediate client (fun xs -> lwt _ = read xs (Printf.sprintf "%s/local/domain/%d/name" prefix domid) in return ())
 		) (between 0 n)
 	done in
 	lwt () = Lwt_list.iter_s
