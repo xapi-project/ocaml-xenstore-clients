@@ -1,3 +1,6 @@
+0.9.1 (6-Aug-2013):
+* update to xenstore 1.2.3
+
 0.9.0 (3-Jun-2013):
 * first public release
 
