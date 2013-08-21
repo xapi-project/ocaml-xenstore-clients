@@ -34,3 +34,6 @@ let write (fd, _) bufs ofs len =
 type 'a t = 'a Lwt.t
 let return = Lwt.return
 let ( >>= ) = Lwt.bind
+
+type backend = [`unix | `xen]
+let backend = `unix

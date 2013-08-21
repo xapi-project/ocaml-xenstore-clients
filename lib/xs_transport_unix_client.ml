@@ -32,3 +32,6 @@ let write (fd, _) bufs ofs len =
 type 'a t = 'a
 let return x = x
 let ( >>= ) x f = f x
+
+type backend = [`unix | `xen]
+let backend = `unix
