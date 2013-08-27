@@ -1,3 +1,7 @@
+0.9.2 (27-Aug-2013):
+* adapt to new xenstore signature which makes it easy to write code
+  oblivious to whether it's running in Unix userspace or xen
+
 0.9.1 (6-Aug-2013):
 * update to xenstore 1.2.3
 
