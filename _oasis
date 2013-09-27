@@ -19,8 +19,8 @@ Library xenstore_transport_lwt_unix
   Path:               lib
   Findlibname:        lwt
   Findlibparent:      xenstore_transport
-  Modules:            Xs_transport_lwt_unix_client
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_transport
+  Modules:            Xs_transport_lwt_unix_client, Xs
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_transport, xenstore.client
 
 Library xenstore_transport_unix
   CompiledObject:     best
