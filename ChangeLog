@@ -1,3 +1,6 @@
+0.9.3 (9-May-2014):
+* fix a file descriptor leak when we cannot connect to xenstore
+
 0.9.2 (27-Aug-2013):
 * adapt to new xenstore signature which makes it easy to write code
   oblivious to whether it's running in Unix userspace or xen
