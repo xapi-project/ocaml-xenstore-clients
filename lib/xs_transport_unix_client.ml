@@ -19,8 +19,12 @@ type channel = Unix.file_descr * Unix.sockaddr
 let create () =
   let sockaddr = Unix.ADDR_UNIX(!Xs_transport.xenstored_socket) in
   let fd = Unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
-  Unix.connect fd sockaddr;
-  fd, sockaddr
+  try
+    Unix.connect fd sockaddr;
+    fd, sockaddr
+  with e ->
+    Unix.close fd;
+    raise e
 let destroy (fd, _) = Unix.close fd
 let read (fd, _) = Unix.read fd
 let write (fd, _) bufs ofs len =
