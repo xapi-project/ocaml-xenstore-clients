@@ -1,3 +1,7 @@
+0.9.4 (unreleased):
+* use the xenbus device if the Unix domain socket isn't available
+* respect the XENSTORED_PATH environment variable
+
 0.9.3 (9-May-2014):
 * fix a file descriptor leak when we cannot connect to xenstore
 
