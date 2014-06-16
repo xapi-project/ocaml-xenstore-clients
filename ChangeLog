@@ -1,4 +1,4 @@
-0.9.4 (unreleased):
+0.9.4 (16-Jun-2014):
 * use the xenbus device if the Unix domain socket isn't available
 * respect the XENSTORED_PATH environment variable
 
