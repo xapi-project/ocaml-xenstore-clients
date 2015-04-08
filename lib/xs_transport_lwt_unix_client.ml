@@ -19,35 +19,15 @@ open Lwt
 (* Individual connections *)
 type channel = Lwt_unix.file_descr
 
-(* We'll look for these paths in order: *)
-let get_xenstore_paths () =
-  let default = [
-    !Xs_transport.xenstored_socket;
-    "/proc/xen/xenbus"; (* Linux *)
-    "/dev/xen/xenstore"; (* FreeBSD *)
-  ] in
-  try
-    Sys.getenv "XENSTORED_PATH" :: default
-  with Not_found -> default
-
-let choose_xenstore_path () =
-  List.fold_left (fun acc possibility -> match acc with
-    | Some x -> Some x
-    | None ->
-      if Sys.file_exists possibility then Some possibility else None
-  ) None (get_xenstore_paths ())
-
-exception Could_not_find_xenstore
-
 let create () =
-  ( match choose_xenstore_path () with
+  ( match Xs_transport.choose_xenstore_path () with
     | None ->
       Printf.fprintf stderr "Failed to find xenstore socket. I tried the following:\n";
-      List.iter (fun x -> Printf.fprintf stderr "  %s\n" x) (get_xenstore_paths ());
+      List.iter (fun x -> Printf.fprintf stderr "  %s\n" x) (Xs_transport.get_xenstore_paths ());
       Printf.fprintf stderr "\nOn linux you might not have xenfs mounted:\n";
       Printf.fprintf stderr "   sudo mount -t xenfs xenfs /proc/xen\n";
       Printf.fprintf stderr "Or perhaps you just need to set the XENSTORED_PATH environment variable.\n";
-      fail Could_not_find_xenstore
+      fail Xs_transport.Could_not_find_xenstore
     | Some x -> return x ) >>= fun path ->
   Lwt_unix.stat path >>= fun stats ->
   match stats.Lwt_unix.st_kind with
