@@ -15,19 +15,36 @@
 (** A byte-level transport over the xenstore Unix domain socket *)
 
 (* Individual connections *)
-type channel = Unix.file_descr * Unix.sockaddr
+type channel = Unix.file_descr
 let create () =
-  let sockaddr = Unix.ADDR_UNIX(!Xs_transport.xenstored_socket) in
-  let fd = Unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
-  try
-    Unix.connect fd sockaddr;
-    fd, sockaddr
-  with e ->
-    Unix.close fd;
-    raise e
-let destroy (fd, _) = Unix.close fd
-let read (fd, _) = Unix.read fd
-let write (fd, _) bufs ofs len =
+  let path = match Xs_transport.choose_xenstore_path () with
+  | None ->
+    Printf.fprintf stderr "Failed to find xenstore socket. I tried the following:\n";
+    List.iter (fun x -> Printf.fprintf stderr "  %s\n" x) (Xs_transport.get_xenstore_paths ());
+    Printf.fprintf stderr "\nOn linux you might not have xenfs mounted:\n";
+    Printf.fprintf stderr "   sudo mount -t xenfs xenfs /proc/xen\n";
+    Printf.fprintf stderr "Or perhaps you just need to set the XENSTORED_PATH environment variable.\n";
+    raise Xs_transport.Could_not_find_xenstore
+  | Some path -> path
+  in
+  let stats = Unix.stat path in
+  match stats.Unix.st_kind with
+  | Unix.S_SOCK -> begin
+    let sockaddr = Unix.ADDR_UNIX(path) in
+    let fd = Unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+    try
+      Unix.connect fd sockaddr;
+      fd
+    with e ->
+      Unix.close fd;
+      raise e
+  end
+  | _ ->
+    Unix.openfile path [Lwt_unix.O_RDWR] 0o0
+
+let destroy fd = Unix.close fd
+let read fd = Unix.read fd
+let write fd bufs ofs len =
 	let n = Unix.write fd bufs ofs len in
 	if n <> len then begin
 		raise End_of_file
