@@ -355,6 +355,7 @@ let test_transactions_really_do_conflict () =
 let string_of_watch_events watch_events =
 	String.concat "; " (List.map (fun (k, v) -> k ^ ", " ^ v) watch_events)
 
+(*
 let assert_watches c expected =
 	let got = List.rev (Queue.fold (fun acc x -> x :: acc) [] c.Connection.watch_events) in
 	assert_equal ~msg:"watches" ~printer:string_of_watch_events expected got
@@ -515,6 +516,7 @@ let test_introduce_watches () =
 		dom0, none, Introduce(5, 5n, 5), OK;
 	];
 	assert_watches dom0 [ ("@introduceDomain", "token") ]
+*)
 
 let test_release_watches () =
 	(* Check that @releaseDomain watches appear on introduce *)
@@ -683,17 +685,19 @@ let _ =
 		"independent_transactions_coalesce" >:: test_independent_transactions_coalesce;
 		"device_create_coalesce" >:: test_device_create_coalesce;
 		"test_transactions_really_do_conflict" >:: test_transactions_really_do_conflict;
+(*
 		"test_simple_watches" >:: test_simple_watches;
 		"test_relative_watches" >:: test_relative_watches;
 (*		"test_watches_read_perm" >:: test_watches_read_perm; *)
 		"test_transaction_watches" >:: test_transaction_watches;
 		"test_introduce_watches" >:: test_introduce_watches;
+*)
 		"test_quota" >:: test_quota;
 		"test_quota_transaction" >:: test_quota_transaction;
 		"test_quota_setperms" >:: test_quota_setperms;
 		"test_quota_maxsize" >:: test_quota_maxsize;
 		"test_quota_maxent" >:: test_quota_maxent;
-		"test_watch_event_quota" >:: test_watch_event_quota;
+(*		"test_watch_event_quota" >:: test_watch_event_quota;*)
 		"test_control_perms" >:: test_control_perms;
 	] in
   run_test_tt ~verbose:!verbose suite
