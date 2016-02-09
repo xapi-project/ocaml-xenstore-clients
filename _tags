@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 0ea4f53cfac9bc40b6a9b0027cec2698)
+# DO NOT EDIT (digest: 5ae47f5f25502351e82bbcdf5651fdc0)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -59,6 +59,22 @@ true: annot, bin_annot
 <bench/*.ml{,i,y}>: use_xenstore_transport
 <bench/*.ml{,i,y}>: use_xenstore_transport_lwt_unix
 <bench/xs_bench.{native,byte}>: custom
+# Executable xstest
+<test/server_test.{native,byte}>: pkg_oUnit
+<test/server_test.{native,byte}>: pkg_threads
+<test/server_test.{native,byte}>: pkg_unix
+<test/server_test.{native,byte}>: pkg_xenstore
+<test/server_test.{native,byte}>: pkg_xenstore.client
+<test/server_test.{native,byte}>: use_xenstore_transport
+<test/server_test.{native,byte}>: use_xenstore_transport_unix
+<test/*.ml{,i,y}>: pkg_oUnit
+<test/*.ml{,i,y}>: pkg_threads
+<test/*.ml{,i,y}>: pkg_unix
+<test/*.ml{,i,y}>: pkg_xenstore
+<test/*.ml{,i,y}>: pkg_xenstore.client
+<test/*.ml{,i,y}>: use_xenstore_transport
+<test/*.ml{,i,y}>: use_xenstore_transport_unix
+<test/server_test.{native,byte}>: custom
 # OASIS_STOP
 true: annot
 "lib/xs_transport_lwt_unix_client.ml": syntax_camlp4o
