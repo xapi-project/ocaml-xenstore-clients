@@ -12,15 +12,18 @@
  * GNU Lesser General Public License for more details.
  *)
 
+open Xs_protocol
 open OUnit
 
 let ( |> ) a b = b a
 let ( ++ ) a b x = a (b x)
 let id x = x
 
-let empty_store () = Store.create ()
+let none = 0l
 
-let none = Transaction.none
+(* To return a string similar to Xs_protocol.Request.prettyprint *)
+let string_of_response resp =
+	Printf.sprintf "tid = %ld; rid = %ld; payload = %s" (Xs_protocol.get_tid resp) (Xs_protocol.get_rid resp) (Xs_protocol.get_data resp)
 
 let success f reply =
 	match Xs_protocol.get_ty reply with
@@ -32,7 +35,7 @@ let failure f reply =
 	match Xs_protocol.get_ty reply with
 		| Xs_protocol.Op.Error -> f reply
 		| _ ->
-			failwith (Printf.sprintf "Expected failure, got success: %s" (Junk.hexify(Xs_protocol.to_string reply)))
+			failwith (Printf.sprintf "Expected failure, got success: %s" (string_of_response reply))
 
 let list f reply = match Xs_protocol.Unmarshal.list reply with
 	| Some x -> f x
@@ -54,7 +57,7 @@ let equals expected got =
 	if expected <> got
 	then failwith (Printf.sprintf "Expected %s got %s" expected got)
 
-type result =
+type res =
 	| OK
 	| Err of string
 	| String of string
@@ -76,15 +79,58 @@ let check_result reply = function
 	| Tid f ->
 		(success ++ int32) f reply
 
-let rpc store c tid payload =
-	let request = Xs_protocol.Request.print payload tid 0l in
-	Call.reply store c request
+module PS = PacketStream(Xs_transport_unix_client)
 
-let run store (payloads: (Connection.t * int32 * Xs_protocol.Request.payload * result) list) =
+type conn = {
+	id: int;
+	ps: PS.stream;
+}
+
+let make_connection id =
+        let c = Xs_transport_unix_client.create () in
+	let ps = PS.make c in
+	{id; ps}
+
+let rpc ?(verbose=true) store c tid payload =
+	let request = Xs_protocol.Request.print payload tid 0l in
+	if verbose then Printf.printf "[%d,%ld,req] %s\n" c.id tid (Xs_protocol.Request.prettyprint request);
+        (* send request *)
+        PS.send c.ps request;
+        (* read reply *)
+        match PS.recv c.ps with
+        | Ok resp ->
+		if verbose then Printf.printf "[%d,%ld,rsp] %s\n" c.id tid (string_of_response resp);
+		resp
+        | Exception e ->
+		raise e
+
+let run store (payloads: (conn * int32 * Xs_protocol.Request.payload * res) list) =
 	List.iter
 		(fun (c, tid, payload, expected_result) ->
 			check_result (rpc store c tid payload) expected_result
 		) payloads
+
+module Connection = struct
+	let create dom _ = match dom with
+		| Domain id -> make_connection id
+		| _ -> assert false
+end
+
+(* Since we're using the real xenstore, just delete the nodes that might be used in tests *)
+let empty_store () =
+	let c = make_connection (-1) in
+	let store = () in
+        let open Xs_protocol.Request in
+	rpc ~verbose:false store c none (PathOp("/a", Rm));
+	rpc ~verbose:false store c none (PathOp("/bench", Rm));
+	rpc ~verbose:false store c none (PathOp("/foo", Rm));
+	()
+
+
+(* ---------------- *)
+(* Tests begin here *)
+(* ---------------- *)
+
 
 let test_implicit_create () =
 	(* Write a path and check the parent nodes can be read *)
