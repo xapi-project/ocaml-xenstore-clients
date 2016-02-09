@@ -55,5 +55,4 @@
 <bench/xs_bench.{native,byte}>: custom
 # OASIS_STOP
 true: annot
-<*/*>: syntax_camlp4o
-<*/*>: pkg_lwt.syntax
+"lib/xs_transport_lwt_unix_client.ml": syntax_camlp4o
