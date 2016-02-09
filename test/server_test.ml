@@ -534,6 +534,7 @@ let test_bounded_watch_events () =
 	(* Check that the per-connection watch event queue is bounded *)
 	()
 
+(*
 let test_quota () =
 	(* Check that node creation and destruction changes a quota *)
 	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
@@ -661,6 +662,7 @@ let test_control_perms () =
 		dom1, none, PathOp("/quota/default/number-of-entries", Write "1"), Err "EACCES";
 		dom1, none, PathOp("/tool/xenstored/log/reply-err/ENOENT", Write "1"), Err "EACCES";
 	]
+*)
 
 let _ =
   let verbose = ref false in
@@ -692,6 +694,7 @@ let _ =
 		"test_transaction_watches" >:: test_transaction_watches;
 		"test_introduce_watches" >:: test_introduce_watches;
 *)
+(*
 		"test_quota" >:: test_quota;
 		"test_quota_transaction" >:: test_quota_transaction;
 		"test_quota_setperms" >:: test_quota_setperms;
@@ -699,5 +702,6 @@ let _ =
 		"test_quota_maxent" >:: test_quota_maxent;
 (*		"test_watch_event_quota" >:: test_watch_event_quota;*)
 		"test_control_perms" >:: test_control_perms;
+*)
 	] in
   run_test_tt ~verbose:!verbose suite
