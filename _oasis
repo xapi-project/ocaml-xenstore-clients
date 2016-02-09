@@ -20,7 +20,7 @@ Library xenstore_transport_lwt_unix
   Findlibname:        lwt
   Findlibparent:      xenstore_transport
   Modules:            Xs_transport_lwt_unix_client, Xs
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_transport, xenstore.client
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_transport, xenstore.client, lwt.syntax
 
 Library xenstore_transport_unix
   CompiledObject:     best
@@ -36,7 +36,7 @@ Executable xs
   MainIs:             xs_client_cli.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt, lwt.syntax
 
 Executable xsbench
   CompiledObject:     best
@@ -44,4 +44,4 @@ Executable xsbench
   MainIs:             xs_bench.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt, lwt.syntax
