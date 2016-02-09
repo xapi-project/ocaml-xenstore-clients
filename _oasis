@@ -45,3 +45,11 @@ Executable xsbench
   Custom:             true
   Install:            false
   BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt, lwt.syntax
+
+Executable xstest
+  CompiledObject:     best
+  Path:               test
+  MainIs:             server_test.ml
+  Custom:             true
+  Install:            false
+  BuildDepends:       oUnit, threads, xenstore, xenstore.client, xenstore_transport, xenstore_transport.unix
