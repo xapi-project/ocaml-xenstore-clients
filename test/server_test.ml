@@ -342,6 +342,21 @@ let test_device_create_coalesce () =
 		dom0, none, PathOp("/local/domain/0/backend/vbd/2/51712", Read), String "hello";
 	]
 
+let test_transaction_with_error_coalesce () =
+	(* Check that a transaction experiencing an error can coalesce with another *)
+	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid_1, PathOp("/a/a", Read), Err "ENOENT";
+		dom0, tid_1, PathOp("/a/b", Write "data"), OK;
+		dom0, tid_2, PathOp("/a/c", Write "data"), OK;
+		dom0, tid_2, Transaction_end true, OK;
+		dom0, tid_1, Transaction_end true, OK;
+	]
+
 let test_transactions_really_do_conflict () =
 	(* Check that transactions that really can't interleave are aborted *)
 	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
@@ -359,6 +374,62 @@ let test_transactions_really_do_conflict () =
 		dom0, none, PathOp("/a/b", Read), String "hello"
 	]
 
+let test_transactions_really_do_conflict_2 () =
+	(* Check that transactions that really can't interleave are aborted *)
+	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid, PathOp("/foo", Read), Err "ENOENT";
+		dom0, tid, PathOp("/foo", Write "bar"), OK;
+		dom0, none, PathOp("/foo", Write "baz"), OK;
+		dom0, tid, Transaction_end true, Err "EAGAIN";
+		dom0, none, PathOp("/foo", Read), String "baz"
+	]
+
+let test_transactions_serialize () =
+	(* Check that a transaction can be serialized with other operations *)
+	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid, PathOp("/foo", Write "bar"), OK;
+		dom0, none, PathOp("/foo", Write "baz"), OK;
+		dom0, tid, Transaction_end true, OK;
+		dom0, none, PathOp("/foo", Read), String "bar"
+	]
+
+let test_transactions_serialize_2 () =
+	(* Check that a transaction can be serialized with another transaction *)
+	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid_1, PathOp("/foo", Write "bar"), OK;
+		dom0, tid_2, PathOp("/foo", Write "baz"), OK;
+		dom0, tid_1, Transaction_end true, OK;
+		dom0, tid_2, Transaction_end true, OK;
+		dom0, none, PathOp("/foo", Read), String "baz"
+	]
+
+let test_transactions_serialize_3 () =
+	(* Check that a transaction can be serialized with another transaction *)
+	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid_1, PathOp("/foo", Write "bar"), OK;
+		dom0, tid_2, PathOp("/foo", Write "baz"), OK;
+		dom0, tid_2, Transaction_end true, OK;
+		dom0, tid_1, Transaction_end true, OK;
+		dom0, none, PathOp("/foo", Read), String "bar"
+	]
 
 let string_of_watch_events watch_events =
 	String.concat "; " (List.map (fun (k, v) -> k ^ ", " ^ v) watch_events)
@@ -694,7 +765,12 @@ let _ =
 		"transactions_are_isolated" >:: test_transactions_are_isolated;
 		"independent_transactions_coalesce" >:: test_independent_transactions_coalesce;
 		"device_create_coalesce" >:: test_device_create_coalesce;
+		"transaction_with_error_coalesce" >:: test_transaction_with_error_coalesce;
 		"test_transactions_really_do_conflict" >:: test_transactions_really_do_conflict;
+		"test_transactions_really_do_conflict_2" >:: test_transactions_really_do_conflict_2;
+		"test_transactions_serialize" >:: test_transactions_serialize;
+		"test_transactions_serialize_2" >:: test_transactions_serialize_2;
+		"test_transactions_serialize_3" >:: test_transactions_serialize_3;
 (*
 		"test_simple_watches" >:: test_simple_watches;
 		"test_relative_watches" >:: test_relative_watches;
