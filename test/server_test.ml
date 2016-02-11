@@ -388,6 +388,24 @@ let test_transactions_really_do_conflict_2 () =
 		dom0, none, PathOp("/foo", Read), String "baz"
 	]
 
+let test_transactions_really_do_conflict_3 () =
+	(* Check that transactions that really can't interleave are aborted *)
+	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid_1, PathOp("/foo", Read), Err "ENOENT";
+		dom0, tid_1, PathOp("/foo", Write "bar"), OK;
+	];
+	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+	run store [
+		dom0, tid_2, PathOp("/foo", Write "baz"), OK;
+		dom0, tid_2, Transaction_end true, OK;
+		dom0, tid_1, Transaction_end true, Err "EAGAIN";
+		dom0, none, PathOp("/foo", Read), String "baz"
+	]
+
 let test_transactions_serialize () =
 	(* Check that a transaction can be serialized with other operations *)
 	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
@@ -768,6 +786,7 @@ let _ =
 		"transaction_with_error_coalesce" >:: test_transaction_with_error_coalesce;
 		"test_transactions_really_do_conflict" >:: test_transactions_really_do_conflict;
 		"test_transactions_really_do_conflict_2" >:: test_transactions_really_do_conflict_2;
+		"test_transactions_really_do_conflict_3" >:: test_transactions_really_do_conflict_3;
 		"test_transactions_serialize" >:: test_transactions_serialize;
 		"test_transactions_serialize_2" >:: test_transactions_serialize_2;
 		"test_transactions_serialize_3" >:: test_transactions_serialize_3;
