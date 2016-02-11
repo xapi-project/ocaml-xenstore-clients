@@ -761,6 +761,30 @@ let test_control_perms () =
 	]
 *)
 
+(*
+let list_create n item =
+	let rec f n item acc =
+		if n = 0 then acc
+		else f (n-1) item ((item n) :: acc)
+	in
+	f n item []
+
+let test_quota_maxrequests () =
+	(* Test the quota governing the maximum number of requests per transaction *)
+	(* We assume the default is 1024 and is not dynamically configurable *)
+	let domU = Connection.create (Xs_protocol.Domain 1) None in
+	let store = empty_store () in
+	let open Xs_protocol.Request in
+	let tid = (success ++ int32) id (rpc store domU none Transaction_start) in
+	run store (list_create 1024 (fun n ->
+		domU, tid, PathOp("/foo", Write (string_of_int n)), OK
+	));
+	run store [
+		(* One more request should tip it over the edge *)
+		domU, tid, PathOp("/foo", Write "just one more"), Err "EQUOTA";
+	]
+*)
+
 let _ =
   let verbose = ref false in
   Arg.parse [
@@ -805,6 +829,7 @@ let _ =
 		"test_quota_maxent" >:: test_quota_maxent;
 (*		"test_watch_event_quota" >:: test_watch_event_quota;*)
 		"test_control_perms" >:: test_control_perms;
+		"test_quota_maxrequests" >:: test_quota_maxrequests;
 *)
 	] in
   run_test_tt ~verbose:!verbose suite
