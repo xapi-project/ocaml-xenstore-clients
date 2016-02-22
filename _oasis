@@ -51,5 +51,5 @@ Executable xstest
   Path:               test
   MainIs:             server_test.ml
   Custom:             true
-  Install:            false
+  Install:            true
   BuildDepends:       oUnit, threads, xenstore, xenstore.client, xenstore_transport, xenstore_transport.unix
