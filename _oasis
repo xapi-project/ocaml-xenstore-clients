@@ -1,10 +1,10 @@
-OASISFormat: 0.2
+OASISFormat: 0.4
 Name:        xenstore_clients
 Version:     0.9.2
 Synopsis:    Unix tools for accessing xenstore
 Authors:     Dave Scott
 License:     LGPL-2.1 with OCaml linking exception
-Plugins:     META (0.2)
+Plugins:     META (0.4), DevFiles(0.4)
 BuildTools:  ocamlbuild
 
 Library xenstore_transport
@@ -20,7 +20,7 @@ Library xenstore_transport_lwt_unix
   Findlibname:        lwt
   Findlibparent:      xenstore_transport
   Modules:            Xs_transport_lwt_unix_client, Xs
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_transport, xenstore.client
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_transport, xenstore.client, lwt.syntax
 
 Library xenstore_transport_unix
   CompiledObject:     best
@@ -36,7 +36,7 @@ Executable xs
   MainIs:             xs_client_cli.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt, lwt.syntax
 
 Executable xsbench
   CompiledObject:     best
@@ -44,4 +44,12 @@ Executable xsbench
   MainIs:             xs_bench.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.client, xenstore_transport, xenstore_transport.lwt, lwt.syntax
+
+Executable xstest
+  CompiledObject:     best
+  Path:               test
+  MainIs:             server_test.ml
+  Custom:             true
+  Install:            true
+  BuildDepends:       oUnit, threads, xenstore, xenstore.client, xenstore_transport, xenstore_transport.unix
