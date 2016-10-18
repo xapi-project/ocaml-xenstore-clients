@@ -53,3 +53,11 @@ Executable xstest
   Custom:             true
   Install:            true
   BuildDepends:       oUnit, threads, xenstore, xenstore.client, xenstore_transport, xenstore_transport.unix
+
+Executable xs_client_test
+  CompiledObject:     best
+  Path:               test
+  MainIs:             client_test.ml
+  Custom:             true
+  Install:            false
+  BuildDepends:       xenstore, xenstore.unix, threads, xenstore_transport.unix
