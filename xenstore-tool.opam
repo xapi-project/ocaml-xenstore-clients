@@ -1,0 +1,24 @@
+opam-version: "1.2"
+maintainer: "dave@recoil.org"
+homepage:    "http://github.com/djs55/ocaml-xenstore-clients"
+bug-reports: "http://github.com/djs55/ocaml-xenstore-clients/issues"
+dev-repo:    "http://github.com/djs55/ocaml-xenstore-clients.git"
+doc:         "http://djs55.github.io/ocaml-xenstore-clients"
+license:     "LGPL"
+
+tags: [
+  "org:mirage"
+  "org:xapi-project"
+]
+build: [
+  [ "jbuilder" "subst"] {pinned}
+  [ "jbuilder" "build" "-p" name "-j" jobs ]
+]
+
+depends: [
+  "ocamlfind" {build}
+  "jbuilder"  {build & >="1.0+beta9"}
+  "lwt"
+  "xenstore" {> "1.2.1"}
+  "xenstore_transport"
+]
