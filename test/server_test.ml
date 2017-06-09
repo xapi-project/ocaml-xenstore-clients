@@ -23,108 +23,108 @@ let none = 0l
 
 (* To return a string similar to Xs_protocol.Request.prettyprint *)
 let string_of_response resp =
-	Printf.sprintf "tid = %ld; rid = %ld; payload = %s" (Xs_protocol.get_tid resp) (Xs_protocol.get_rid resp) (Xs_protocol.get_data resp)
+  Printf.sprintf "tid = %ld; rid = %ld; payload = %s" (Xs_protocol.get_tid resp) (Xs_protocol.get_rid resp) (Xs_protocol.get_data resp)
 
 let success f reply =
-	match Xs_protocol.get_ty reply with
-		| Xs_protocol.Op.Error ->
-			failwith (Printf.sprintf "Error: %s" (Xs_protocol.get_data reply))
-		| _ -> f reply
+  match Xs_protocol.get_ty reply with
+  | Xs_protocol.Op.Error ->
+    failwith (Printf.sprintf "Error: %s" (Xs_protocol.get_data reply))
+  | _ -> f reply
 
 let failure f reply =
-	match Xs_protocol.get_ty reply with
-		| Xs_protocol.Op.Error -> f reply
-		| _ ->
-			failwith (Printf.sprintf "Expected failure, got success: %s" (string_of_response reply))
+  match Xs_protocol.get_ty reply with
+  | Xs_protocol.Op.Error -> f reply
+  | _ ->
+    failwith (Printf.sprintf "Expected failure, got success: %s" (string_of_response reply))
 
 let list f reply = match Xs_protocol.Unmarshal.list reply with
-	| Some x -> f x
-	| None -> failwith "Failed to unmarshal string list"
+  | Some x -> f x
+  | None -> failwith "Failed to unmarshal string list"
 
 let string f reply = match Xs_protocol.Unmarshal.string reply with
-	| Some x -> f x
-	| None -> failwith "Failed to unmarshal string"
+  | Some x -> f x
+  | None -> failwith "Failed to unmarshal string"
 
 let acl f reply = match Xs_protocol.Unmarshal.acl reply with
-	| Some x -> f x
-	| None -> failwith "Failed to unmarshal acl"
+  | Some x -> f x
+  | None -> failwith "Failed to unmarshal acl"
 
 let int32 f reply = match Xs_protocol.Unmarshal.int32 reply with
-	| Some x -> f x
-	| None -> failwith "Failed to unmarshal int32"
+  | Some x -> f x
+  | None -> failwith "Failed to unmarshal int32"
 
 let equals expected got =
-	if expected <> got
-	then failwith (Printf.sprintf "Expected %s got %s" expected got)
+  if expected <> got
+  then failwith (Printf.sprintf "Expected %s got %s" expected got)
 
 type res =
-	| OK
-	| Err of string
-	| String of string
-	| StringList of (string list -> unit)
-	| Perms of (Xs_protocol.ACL.t -> unit)
-	| Tid of (int32 -> unit)
+  | OK
+  | Err of string
+  | String of string
+  | StringList of (string list -> unit)
+  | Perms of (Xs_protocol.ACL.t -> unit)
+  | Tid of (int32 -> unit)
 
 let check_result reply = function
-	| OK ->
-		success ignore reply
-	| String which ->
-		(success ++ string ++ equals) which reply
-	| Err which ->
-		(failure ++ string ++ equals) which reply
-	| StringList f ->
-		(success ++ list) f reply
-	| Perms f ->
-		(success ++ acl) f reply
-	| Tid f ->
-		(success ++ int32) f reply
+  | OK ->
+    success ignore reply
+  | String which ->
+    (success ++ string ++ equals) which reply
+  | Err which ->
+    (failure ++ string ++ equals) which reply
+  | StringList f ->
+    (success ++ list) f reply
+  | Perms f ->
+    (success ++ acl) f reply
+  | Tid f ->
+    (success ++ int32) f reply
 
 module PS = PacketStream(Xs_transport_unix_client)
 
 type conn = {
-	id: int;
-	ps: PS.stream;
+  id: int;
+  ps: PS.stream;
 }
 
 let make_connection id =
-        let c = Xs_transport_unix_client.create () in
-	let ps = PS.make c in
-	{id; ps}
+  let c = Xs_transport_unix_client.create () in
+  let ps = PS.make c in
+  {id; ps}
 
 let rpc ?(verbose=true) store c tid payload =
-	let request = Xs_protocol.Request.print payload tid 0l in
-	if verbose then Printf.printf "[%d,%ld,req] %s\n" c.id tid (Xs_protocol.Request.prettyprint request);
-        (* send request *)
-        PS.send c.ps request;
-        (* read reply *)
-        match PS.recv c.ps with
-        | Ok resp ->
-		if verbose then Printf.printf "[%d,%ld,rsp] %s\n" c.id tid (string_of_response resp);
-		resp
-        | Exception e ->
-		raise e
+  let request = Xs_protocol.Request.print payload tid 0l in
+  if verbose then Printf.printf "[%d,%ld,req] %s\n" c.id tid (Xs_protocol.Request.prettyprint request);
+  (* send request *)
+  PS.send c.ps request;
+  (* read reply *)
+  match PS.recv c.ps with
+  | Ok resp ->
+    if verbose then Printf.printf "[%d,%ld,rsp] %s\n" c.id tid (string_of_response resp);
+    resp
+  | Exception e ->
+    raise e
 
 let run store (payloads: (conn * int32 * Xs_protocol.Request.payload * res) list) =
-	List.iter
-		(fun (c, tid, payload, expected_result) ->
-			check_result (rpc store c tid payload) expected_result
-		) payloads
+  List.iter
+    (fun (c, tid, payload, expected_result) ->
+       check_result (rpc store c tid payload) expected_result
+    ) payloads
 
 module Connection = struct
-	let create dom _ = match dom with
-		| Domain id -> make_connection id
-		| _ -> assert false
+  let create dom _ = match dom with
+    | Domain id -> make_connection id
+    | _ -> assert false
 end
 
 (* Since we're using the real xenstore, just delete the nodes that might be used in tests *)
 let empty_store () =
-	let c = make_connection (-1) in
-	let store = () in
-        let open Xs_protocol.Request in
-	rpc ~verbose:false store c none (PathOp("/a", Rm));
-	rpc ~verbose:false store c none (PathOp("/bench", Rm));
-	rpc ~verbose:false store c none (PathOp("/foo", Rm));
-	()
+  let c = make_connection (-1) in
+  let store = () in
+  let open Xs_protocol.Request in
+  rpc ~verbose:false store c none (PathOp("/a", Rm));
+  rpc ~verbose:false store c none (PathOp("/bench", Rm));
+  rpc ~verbose:false store c none (PathOp("/foo", Rm));
+  ()
 
 
 (* ---------------- *)
@@ -154,32 +154,32 @@ let test_implicit_create () =
 *)
 
 let test_directory_order () =
-	(* Create nodes in a particular order and check 'directory'
-	   preserves the ordering *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/a/1", Write ""), OK;
-		dom0, none, PathOp("/a/2/foo", Write ""), OK;
-		dom0, none, PathOp("/a/3", Write ""), OK;
-		dom0, none, PathOp("/a", Directory), StringList (fun x -> assert_equal ~msg:"directory /a" ~printer:(String.concat ", ") ["1"; "2"; "3"] x);
-	]
+  (* Create nodes in a particular order and check 'directory'
+     	   preserves the ordering *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/a/1", Write ""), OK;
+    dom0, none, PathOp("/a/2/foo", Write ""), OK;
+    dom0, none, PathOp("/a/3", Write ""), OK;
+    dom0, none, PathOp("/a", Directory), StringList (fun x -> assert_equal ~msg:"directory /a" ~printer:(String.concat ", ") ["1"; "2"; "3"] x);
+  ]
 
 let example_acl =
-	let open Xs_protocol.ACL in
-    { owner = 5; other = READ; acl = [ 2, WRITE; 3, RDWR ] }
+  let open Xs_protocol.ACL in
+  { owner = 5; other = READ; acl = [ 2, WRITE; 3, RDWR ] }
 
 let test_setperms_getperms () =
-	(* Check that getperms(setperms(x)) = x *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/foo", Write ""), OK;
-		dom0, none, PathOp("/foo", Setperms example_acl), OK;
-		dom0, none, PathOp("/foo", Getperms), Perms (fun x -> assert_equal ~msg:"perms /foo" ~printer:Xs_protocol.ACL.to_string x example_acl);
-	]
+  (* Check that getperms(setperms(x)) = x *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/foo", Write ""), OK;
+    dom0, none, PathOp("/foo", Setperms example_acl), OK;
+    dom0, none, PathOp("/foo", Getperms), Perms (fun x -> assert_equal ~msg:"perms /foo" ~printer:Xs_protocol.ACL.to_string x example_acl);
+  ]
 
 (*
 let test_setperms_owner () =
@@ -203,47 +203,47 @@ let test_setperms_owner () =
 *)
 
 let test_mkdir () =
-	(* Check that mkdir creates usable nodes *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/a/b", Read), Err "ENOENT";
-		dom0, none, PathOp("/a", Read), Err "ENOENT";
-	];
-	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid, PathOp("/bench/local/domain/0", Mkdir), OK;
-		dom0, tid, PathOp("/bench/local/domain/0", Setperms example_acl), OK;
-		dom0, tid, PathOp("/bench/local/domain/0", Read), OK;
-		dom0, tid, Transaction_end true, OK;
-	]
+  (* Check that mkdir creates usable nodes *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/a/b", Read), Err "ENOENT";
+    dom0, none, PathOp("/a", Read), Err "ENOENT";
+  ];
+  let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid, PathOp("/bench/local/domain/0", Mkdir), OK;
+    dom0, tid, PathOp("/bench/local/domain/0", Setperms example_acl), OK;
+    dom0, tid, PathOp("/bench/local/domain/0", Read), OK;
+    dom0, tid, Transaction_end true, OK;
+  ]
 
 let test_empty () =
-	(* Check that I can read an empty value *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/a", Write ""), OK;
-		dom0, none, PathOp("/a", Read), OK;
-	]
+  (* Check that I can read an empty value *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/a", Write ""), OK;
+    dom0, none, PathOp("/a", Read), OK;
+  ]
 
 let test_directory () =
-	()
+  ()
 
 let test_rm () =
-	(* rm of a missing node from an existing parent should succeed *)
-	(* rm of a missing node from a missing parent should ENOENT *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/a", Rm), OK;
-		dom0, none, PathOp("/a/b", Rm), Err "ENOENT";
-		dom0, none, PathOp("/a", Write "hello"), OK;
-		dom0, none, PathOp("/a/b", Rm), OK;
-	]
+  (* rm of a missing node from an existing parent should succeed *)
+  (* rm of a missing node from a missing parent should ENOENT *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/a", Rm), OK;
+    dom0, none, PathOp("/a/b", Rm), Err "ENOENT";
+    dom0, none, PathOp("/a", Write "hello"), OK;
+    dom0, none, PathOp("/a/b", Rm), OK;
+  ]
 
 (*
 let test_restrict () =
@@ -282,175 +282,175 @@ let test_set_target () =
 *)
 
 let test_transactions_are_isolated () =
-	(* Check that other connections cannot see the nodes created
-	   within an uncommitted transaction *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
+  (* Check that other connections cannot see the nodes created
+     	   within an uncommitted transaction *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
 
-	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
 
-	run store [
-		dom0, tid, PathOp("/foo", Write "bar"), OK;
-		dom0, none, PathOp("/foo", Read), Err "ENOENT";
-		dom0, tid, Transaction_end true, OK;
-		dom0, none, PathOp("/foo", Read), OK;
-	]
+  run store [
+    dom0, tid, PathOp("/foo", Write "bar"), OK;
+    dom0, none, PathOp("/foo", Read), Err "ENOENT";
+    dom0, tid, Transaction_end true, OK;
+    dom0, none, PathOp("/foo", Read), OK;
+  ]
 
 let test_independent_transactions_coalesce () =
-	(* Check that two parallel, unrelated transactions can be
-	   coalesced properly *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
+  (* Check that two parallel, unrelated transactions can be
+     	   coalesced properly *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
 
-	run store [
-		dom0, none, PathOp("/a/b", Mkdir), OK;
-		dom0, none, PathOp("/1/2", Mkdir), OK;
-	];
-	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_1, PathOp("/a/b", Write "foo"), OK;
-		dom0, tid_2, PathOp("/1/2", Write "foo"), OK;
-		dom0, tid_1, Transaction_end true, OK;
-		dom0, tid_2, Transaction_end true, OK;
-		dom0, none, PathOp("/a/b", Read), String "foo";
-		dom0, none, PathOp("/1/2", Read), String "foo";
-	]
+  run store [
+    dom0, none, PathOp("/a/b", Mkdir), OK;
+    dom0, none, PathOp("/1/2", Mkdir), OK;
+  ];
+  let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_1, PathOp("/a/b", Write "foo"), OK;
+    dom0, tid_2, PathOp("/1/2", Write "foo"), OK;
+    dom0, tid_1, Transaction_end true, OK;
+    dom0, tid_2, Transaction_end true, OK;
+    dom0, none, PathOp("/a/b", Read), String "foo";
+    dom0, none, PathOp("/1/2", Read), String "foo";
+  ]
 
 let test_device_create_coalesce () =
-	(* Check that two parallel, device-creating transactions can coalesce *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/local/domain/0/backend/vbd", Mkdir), OK;
-		dom0, none, PathOp("/local/domain/1/device/vbd", Mkdir), OK;
-		dom0, none, PathOp("/local/domain/2/device/vbd", Mkdir), OK;
-	];
-	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_1, PathOp("/local/domain/0/backend/vbd/1/51712", Write "hello"), OK;
-		dom0, tid_1, PathOp("/local/domain/1/device/vbd/51712", Write "there"), OK;
-		dom0, tid_2, PathOp("/local/domain/0/backend/vbd/2/51712", Write "hello"), OK;
-		dom0, tid_2, PathOp("/local/domain/2/device/vbd/51712", Write "there"), OK;
-		dom0, tid_1, Transaction_end true, OK;
-		dom0, tid_2, Transaction_end true, OK;
-		dom0, none, PathOp("/local/domain/0/backend/vbd/1/51712", Read), String "hello";
-		dom0, none, PathOp("/local/domain/0/backend/vbd/2/51712", Read), String "hello";
-	]
+  (* Check that two parallel, device-creating transactions can coalesce *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/local/domain/0/backend/vbd", Mkdir), OK;
+    dom0, none, PathOp("/local/domain/1/device/vbd", Mkdir), OK;
+    dom0, none, PathOp("/local/domain/2/device/vbd", Mkdir), OK;
+  ];
+  let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_1, PathOp("/local/domain/0/backend/vbd/1/51712", Write "hello"), OK;
+    dom0, tid_1, PathOp("/local/domain/1/device/vbd/51712", Write "there"), OK;
+    dom0, tid_2, PathOp("/local/domain/0/backend/vbd/2/51712", Write "hello"), OK;
+    dom0, tid_2, PathOp("/local/domain/2/device/vbd/51712", Write "there"), OK;
+    dom0, tid_1, Transaction_end true, OK;
+    dom0, tid_2, Transaction_end true, OK;
+    dom0, none, PathOp("/local/domain/0/backend/vbd/1/51712", Read), String "hello";
+    dom0, none, PathOp("/local/domain/0/backend/vbd/2/51712", Read), String "hello";
+  ]
 
 let test_transaction_with_error_coalesce () =
-	(* Check that a transaction experiencing an error can coalesce with another *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_1, PathOp("/a/a", Read), Err "ENOENT";
-		dom0, tid_1, PathOp("/a/b", Write "data"), OK;
-		dom0, tid_2, PathOp("/a/c", Write "data"), OK;
-		dom0, tid_2, Transaction_end true, OK;
-		dom0, tid_1, Transaction_end true, OK;
-	]
+  (* Check that a transaction experiencing an error can coalesce with another *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_1, PathOp("/a/a", Read), Err "ENOENT";
+    dom0, tid_1, PathOp("/a/b", Write "data"), OK;
+    dom0, tid_2, PathOp("/a/c", Write "data"), OK;
+    dom0, tid_2, Transaction_end true, OK;
+    dom0, tid_1, Transaction_end true, OK;
+  ]
 
 let test_transactions_really_do_conflict () =
-	(* Check that transactions that really can't interleave are aborted *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	run store [
-		dom0, none, PathOp("/a", Mkdir), OK;
-	];
-	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid, PathOp("/a", Directory), OK;
-		dom0, none, PathOp("/a/b", Write "hello"), OK;
-		dom0, tid, PathOp("/a/b", Write "there"), OK;
-		dom0, tid, Transaction_end true, Err "EAGAIN";
-		dom0, none, PathOp("/a/b", Read), String "hello"
-	]
+  (* Check that transactions that really can't interleave are aborted *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  run store [
+    dom0, none, PathOp("/a", Mkdir), OK;
+  ];
+  let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid, PathOp("/a", Directory), OK;
+    dom0, none, PathOp("/a/b", Write "hello"), OK;
+    dom0, tid, PathOp("/a/b", Write "there"), OK;
+    dom0, tid, Transaction_end true, Err "EAGAIN";
+    dom0, none, PathOp("/a/b", Read), String "hello"
+  ]
 
 let test_transactions_really_do_conflict_2 () =
-	(* Check that transactions that really can't interleave are aborted *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid, PathOp("/foo", Read), Err "ENOENT";
-		dom0, tid, PathOp("/foo", Write "bar"), OK;
-		dom0, none, PathOp("/foo", Write "baz"), OK;
-		dom0, tid, Transaction_end true, Err "EAGAIN";
-		dom0, none, PathOp("/foo", Read), String "baz"
-	]
+  (* Check that transactions that really can't interleave are aborted *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid, PathOp("/foo", Read), Err "ENOENT";
+    dom0, tid, PathOp("/foo", Write "bar"), OK;
+    dom0, none, PathOp("/foo", Write "baz"), OK;
+    dom0, tid, Transaction_end true, Err "EAGAIN";
+    dom0, none, PathOp("/foo", Read), String "baz"
+  ]
 
 let test_transactions_really_do_conflict_3 () =
-	(* Check that transactions that really can't interleave are aborted *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_1, PathOp("/foo", Read), Err "ENOENT";
-		dom0, tid_1, PathOp("/foo", Write "bar"), OK;
-	];
-	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_2, PathOp("/foo", Write "baz"), OK;
-		dom0, tid_2, Transaction_end true, OK;
-		dom0, tid_1, Transaction_end true, Err "EAGAIN";
-		dom0, none, PathOp("/foo", Read), String "baz"
-	]
+  (* Check that transactions that really can't interleave are aborted *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_1, PathOp("/foo", Read), Err "ENOENT";
+    dom0, tid_1, PathOp("/foo", Write "bar"), OK;
+  ];
+  let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_2, PathOp("/foo", Write "baz"), OK;
+    dom0, tid_2, Transaction_end true, OK;
+    dom0, tid_1, Transaction_end true, Err "EAGAIN";
+    dom0, none, PathOp("/foo", Read), String "baz"
+  ]
 
 let test_transactions_serialize () =
-	(* Check that a transaction can be serialized with other operations *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid, PathOp("/foo", Write "bar"), OK;
-		dom0, none, PathOp("/foo", Write "baz"), OK;
-		dom0, tid, Transaction_end true, OK;
-		dom0, none, PathOp("/foo", Read), String "bar"
-	]
+  (* Check that a transaction can be serialized with other operations *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  let tid = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid, PathOp("/foo", Write "bar"), OK;
+    dom0, none, PathOp("/foo", Write "baz"), OK;
+    dom0, tid, Transaction_end true, OK;
+    dom0, none, PathOp("/foo", Read), String "bar"
+  ]
 
 let test_transactions_serialize_2 () =
-	(* Check that a transaction can be serialized with another transaction *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_1, PathOp("/foo", Write "bar"), OK;
-		dom0, tid_2, PathOp("/foo", Write "baz"), OK;
-		dom0, tid_1, Transaction_end true, OK;
-		dom0, tid_2, Transaction_end true, OK;
-		dom0, none, PathOp("/foo", Read), String "baz"
-	]
+  (* Check that a transaction can be serialized with another transaction *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_1, PathOp("/foo", Write "bar"), OK;
+    dom0, tid_2, PathOp("/foo", Write "baz"), OK;
+    dom0, tid_1, Transaction_end true, OK;
+    dom0, tid_2, Transaction_end true, OK;
+    dom0, none, PathOp("/foo", Read), String "baz"
+  ]
 
 let test_transactions_serialize_3 () =
-	(* Check that a transaction can be serialized with another transaction *)
-	let dom0 = Connection.create (Xs_protocol.Domain 0) None in
-	let store = empty_store () in
-	let open Xs_protocol.Request in
-	let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
-	run store [
-		dom0, tid_1, PathOp("/foo", Write "bar"), OK;
-		dom0, tid_2, PathOp("/foo", Write "baz"), OK;
-		dom0, tid_2, Transaction_end true, OK;
-		dom0, tid_1, Transaction_end true, OK;
-		dom0, none, PathOp("/foo", Read), String "bar"
-	]
+  (* Check that a transaction can be serialized with another transaction *)
+  let dom0 = Connection.create (Xs_protocol.Domain 0) None in
+  let store = empty_store () in
+  let open Xs_protocol.Request in
+  let tid_1 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  let tid_2 = (success ++ int32) id (rpc store dom0 none Transaction_start) in
+  run store [
+    dom0, tid_1, PathOp("/foo", Write "bar"), OK;
+    dom0, tid_2, PathOp("/foo", Write "baz"), OK;
+    dom0, tid_2, Transaction_end true, OK;
+    dom0, tid_1, Transaction_end true, OK;
+    dom0, none, PathOp("/foo", Read), String "bar"
+  ]
 
 let string_of_watch_events watch_events =
-	String.concat "; " (List.map (fun (k, v) -> k ^ ", " ^ v) watch_events)
+  String.concat "; " (List.map (fun (k, v) -> k ^ ", " ^ v) watch_events)
 
 (*
 let assert_watches c expected =
@@ -616,20 +616,20 @@ let test_introduce_watches () =
 *)
 
 let test_release_watches () =
-	(* Check that @releaseDomain watches appear on introduce *)
-	()
+  (* Check that @releaseDomain watches appear on introduce *)
+  ()
 
 let test_recursive_rm_watch () =
-	(* Check that rm generates recursive watches *)
-	()
+  (* Check that rm generates recursive watches *)
+  ()
 
 let test_no_watch_no_error () =
-	(* Check that a write failure doesn't generate a watch *)
-	()
+  (* Check that a write failure doesn't generate a watch *)
+  ()
 
 let test_bounded_watch_events () =
-	(* Check that the per-connection watch event queue is bounded *)
-	()
+  (* Check that the per-connection watch event queue is bounded *)
+  ()
 
 (*
 let test_quota () =
@@ -793,27 +793,27 @@ let _ =
     "Test xenstore server code";
 
   let suite = "xenstore" >:::
-    [
+              [
 
-(*		"test_implicit_create" >:: test_implicit_create;*)
-		"test_directory_order" >:: test_directory_order;
-		"getperms(setperms)" >:: test_setperms_getperms;
-(*		"test_setperms_owner" >:: test_setperms_owner;*)
-		"test_mkdir" >:: test_mkdir;
-		"test_empty" >:: test_empty;
-		"test_rm" >:: test_rm;
-(*		"test_restrict" >:: test_restrict;*)
-(*		"test_set_target" >:: test_set_target;*)
-		"transactions_are_isolated" >:: test_transactions_are_isolated;
-		"independent_transactions_coalesce" >:: test_independent_transactions_coalesce;
-		"device_create_coalesce" >:: test_device_create_coalesce;
-		"transaction_with_error_coalesce" >:: test_transaction_with_error_coalesce;
-		"test_transactions_really_do_conflict" >:: test_transactions_really_do_conflict;
-		"test_transactions_really_do_conflict_2" >:: test_transactions_really_do_conflict_2;
-		"test_transactions_really_do_conflict_3" >:: test_transactions_really_do_conflict_3;
-		"test_transactions_serialize" >:: test_transactions_serialize;
-		"test_transactions_serialize_2" >:: test_transactions_serialize_2;
-		"test_transactions_serialize_3" >:: test_transactions_serialize_3;
+                (*		"test_implicit_create" >:: test_implicit_create;*)
+                "test_directory_order" >:: test_directory_order;
+                "getperms(setperms)" >:: test_setperms_getperms;
+                (*		"test_setperms_owner" >:: test_setperms_owner;*)
+                "test_mkdir" >:: test_mkdir;
+                "test_empty" >:: test_empty;
+                "test_rm" >:: test_rm;
+                (*		"test_restrict" >:: test_restrict;*)
+                (*		"test_set_target" >:: test_set_target;*)
+                "transactions_are_isolated" >:: test_transactions_are_isolated;
+                "independent_transactions_coalesce" >:: test_independent_transactions_coalesce;
+                "device_create_coalesce" >:: test_device_create_coalesce;
+                "transaction_with_error_coalesce" >:: test_transaction_with_error_coalesce;
+                "test_transactions_really_do_conflict" >:: test_transactions_really_do_conflict;
+                "test_transactions_really_do_conflict_2" >:: test_transactions_really_do_conflict_2;
+                "test_transactions_really_do_conflict_3" >:: test_transactions_really_do_conflict_3;
+                "test_transactions_serialize" >:: test_transactions_serialize;
+                "test_transactions_serialize_2" >:: test_transactions_serialize_2;
+                "test_transactions_serialize_3" >:: test_transactions_serialize_3;
 (*
 		"test_simple_watches" >:: test_simple_watches;
 		"test_relative_watches" >:: test_relative_watches;
@@ -831,5 +831,5 @@ let _ =
 		"test_control_perms" >:: test_control_perms;
 		"test_quota_maxrequests" >:: test_quota_maxrequests;
 *)
-	] in
+              ] in
   run_test_tt ~verbose:!verbose suite

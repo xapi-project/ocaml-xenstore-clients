@@ -1,14 +1,3 @@
-*.annot
-*.cmo
-*.cma
-*.cmi
-*.a
-*.o
-*.cmx
-*.cmxs
-*.cmxa
+*.install
+*.merlin
 _build
-*.native
-setup.bin
-setup.data
-setup.log
