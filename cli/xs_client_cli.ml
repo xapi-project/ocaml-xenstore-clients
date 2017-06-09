@@ -61,20 +61,56 @@ let parse_expr s =
       ([], []) (to_list s) in
     ident is @ tokens
   |> List.rev |> Stream.of_list in
-  let rec parse_atom = parser
-    | [< 'Int n >] -> Val (string_of_int n)
-    | [< 'Ident n >] -> Val n
-    | [< 'Float n >] -> Val (string_of_float n)
-    | [< 'String n >] -> Val n
-    | [< 'Kwd "not"; e=parse_expr >] -> Not(e)
-    | [< 'Kwd "("; e=parse_expr; 'Kwd ")" >] -> e
-  and parse_expr = parser
-    | [< e1=parse_atom; stream >] ->
-      (parser
-        | [< 'Kwd "and"; e2=parse_expr >] -> And(e1, e2)
-        | [< 'Kwd "or"; e2=parse_expr >] -> Or(e1, e2)
-        | [< 'Kwd "="; e2=parse_expr >] -> Eq(e1, e2)
-            | [< >] -> e1) stream in
+
+  let rec parse_atom (__strm : _ Stream.t) =
+      match Stream.peek __strm with
+      | Some (Int n) -> (Stream.junk __strm; Val (string_of_int n))
+      | Some (Ident n) -> (Stream.junk __strm; Val n)
+      | Some (Float n) -> (Stream.junk __strm; Val (string_of_float n))
+      | Some (String n) -> (Stream.junk __strm; Val n)
+      | Some (Kwd "not") ->
+          (Stream.junk __strm;
+           let e =
+             (try parse_expr __strm
+              with | Stream.Failure -> raise (Stream.Error ""))
+           in Not e)
+      | Some (Kwd "(") ->
+          (Stream.junk __strm;
+           let e =
+             (try parse_expr __strm
+              with | Stream.Failure -> raise (Stream.Error ""))
+           in
+             (match Stream.peek __strm with
+              | Some (Kwd ")") -> (Stream.junk __strm; e)
+              | _ -> raise (Stream.Error "")))
+      | _ -> raise Stream.Failure
+      and parse_expr (__strm : _ Stream.t) =
+        let e1 = parse_atom __strm in
+        let stream = __strm
+        in
+          (fun (__strm : _ Stream.t) ->
+             match Stream.peek __strm with
+             | Some (Kwd "and") ->
+                 (Stream.junk __strm;
+                  let e2 =
+                    (try parse_expr __strm
+                     with | Stream.Failure -> raise (Stream.Error ""))
+                  in And (e1, e2))
+             | Some (Kwd "or") ->
+                 (Stream.junk __strm;
+                  let e2 =
+                    (try parse_expr __strm
+                     with | Stream.Failure -> raise (Stream.Error ""))
+                  in Or (e1, e2))
+             | Some (Kwd "=") ->
+                 (Stream.junk __strm;
+                  let e2 =
+                    (try parse_expr __strm
+                     with | Stream.Failure -> raise (Stream.Error ""))
+                  in Eq (e1, e2))
+             | _ -> e1)
+            stream
+      in
   s |> Stream.of_string |> make_lexer keywords |> flatten |> parse_expr
 
 (* Return true if [expr] holds. Used in the xenstore 'wait' operation *)
