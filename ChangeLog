@@ -1,3 +1,10 @@
+0.9.5 (12-Jun-2017):
+* unix: search for the xenbus path
+* add more test cases
+* remove camlp4 dependency
+* build with jbuilder
+* travis: use a modern Docker-based setup
+
 0.9.4 (16-Jun-2014):
 * use the xenbus device if the Unix domain socket isn't available
 * respect the XENSTORED_PATH environment variable
