@@ -1,3 +1,8 @@
+0.9.6 (12-Jun-2017):
+* add backwards-compat ocamlfind packages
+  - xenstore_transport.unix
+  - xenstore_transport.lwt
+
 0.9.5 (12-Jun-2017):
 * unix: search for the xenbus path
 * add more test cases
