@@ -91,7 +91,7 @@ let make_connection id =
   let ps = PS.make c in
   {id; ps}
 
-let rpc ?(verbose=true) store c tid payload =
+let rpc ?(verbose=true) _store c tid payload =
   let request = Xs_protocol.Request.print payload tid 0l in
   if verbose then Printf.printf "[%d,%ld,req] %s\n" c.id tid (Xs_protocol.Request.prettyprint request);
   (* send request *)
@@ -121,9 +121,9 @@ let empty_store () =
   let c = make_connection (-1) in
   let store = () in
   let open Xs_protocol.Request in
-  rpc ~verbose:false store c none (PathOp("/a", Rm));
-  rpc ~verbose:false store c none (PathOp("/bench", Rm));
-  rpc ~verbose:false store c none (PathOp("/foo", Rm));
+  ignore @@ rpc ~verbose:false store c none (PathOp("/a", Rm));
+  ignore @@ rpc ~verbose:false store c none (PathOp("/bench", Rm));
+  ignore @@ rpc ~verbose:false store c none (PathOp("/foo", Rm));
   ()
 
 
