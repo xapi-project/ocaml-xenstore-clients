@@ -9,5 +9,5 @@ env:
   - PACKAGE="xenstore_transport"
   - PINS="xenstore_transport:. xenstore-tool:."
   matrix:
-  - PACKAGE="xenstore_transport" DISTRO="debian-stable" OCAML_VERSION="4.02.3"
-  - PACKAGE="xenstore-tool"      DISTRO="debian-stable" OCAML_VERSION="4.02.3"
+  - PACKAGE="xenstore_transport" DISTRO="debian-stable" OCAML_VERSION="4.04.2"
+  - PACKAGE="xenstore-tool"      DISTRO="debian-stable" OCAML_VERSION="4.04.2"

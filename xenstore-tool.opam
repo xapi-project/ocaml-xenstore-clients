@@ -31,6 +31,8 @@ depends: [
   "ocamlfind" {build}
   "jbuilder"  {build & >="1.0+beta9"}
   "lwt"
-  "xenstore" {> "1.2.1"}
+  "xenstore" {>= "2.0.0"}
   "xenstore_transport"
 ]
+
+available: [ ocaml-version >= "4.04.0" ]
