@@ -45,7 +45,7 @@ let destroy = Lwt_unix.close
 let read = Lwt_unix.read
 
 let write fd bufs ofs len =
-  Lwt_unix.write_string fd (Bytes.to_string bufs) ofs len >>= fun n ->
+  Lwt_unix.write_string fd (Bytes.unsafe_to_string bufs) ofs len >>= fun n ->
   if n <> len
   then fail End_of_file
   else return ()
