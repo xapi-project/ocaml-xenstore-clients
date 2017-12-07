@@ -1,3 +1,7 @@
+1.0.0 (07-Dec-2017):
+* compile with -safe-string
+* Use lwt.unix instead of lwt
+
 0.9.6 (12-Jun-2017):
 * add backwards-compat ocamlfind packages
   - xenstore_transport.unix
