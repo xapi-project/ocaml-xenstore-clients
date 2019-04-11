@@ -1,6 +1,6 @@
 OASISFormat: 0.4
 Name:        xenstore_clients
-Version:     0.9.4
+Version:     0.9.4.2
 Synopsis:    Unix tools for accessing xenstore
 Authors:     Dave Scott
 License:     LGPL-2.1 with OCaml linking exception
@@ -51,5 +51,5 @@ Executable xstest
   Path:               test
   MainIs:             server_test.ml
   Custom:             true
-  Install:            true
+  Install:            false
   BuildDepends:       oUnit, threads, xenstore, xenstore.client, xenstore_transport, xenstore_transport.unix
