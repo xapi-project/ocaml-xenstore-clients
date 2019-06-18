@@ -1,4 +1,5 @@
-opam-version: "1.2"
+opam-version: "2.0"
+maintainer: "dave@recoil.org"
 authors: [
   "Christian Lindig"
   "David Scott"
@@ -11,27 +12,27 @@ authors: [
   "Thomas Sanders"
   "Vincent Bernardoff"
 ]
-maintainer: "dave@recoil.org"
-homepage:    "http://github.com/djs55/ocaml-xenstore-clients"
-bug-reports: "http://github.com/djs55/ocaml-xenstore-clients/issues"
-dev-repo:    "http://github.com/djs55/ocaml-xenstore-clients.git"
-doc:         "http://djs55.github.io/ocaml-xenstore-clients"
-license:     "LGPL"
-
-tags: [
-  "org:mirage"
-  "org:xapi-project"
-]
-build: [
-  [ "jbuilder" "subst"] {pinned}
-  [ "jbuilder" "build" "-p" name "-j" jobs ]
-]
-
+license: "LGPL"
+tags: ["org:mirage" "org:xapi-project"]
+homepage: "http://github.com/xapi-project/ocaml-xenstore-clients"
+doc: "http://xapi-project.github.io/ocaml-xenstore-clients"
+bug-reports: "http://github.com/xapi-project/ocaml-xenstore-clients/issues"
 depends: [
+  "ocaml" {>= "4.04.0"}
   "ocamlfind" {build}
-  "jbuilder"  {build & >="1.0+beta9"}
+  "dune" {build & >= "1.0"}
   "lwt"
   "xenstore" {>= "2.0.0"}
 ]
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]
+dev-repo: "git+http://github.com/xapi-project/ocaml-xenstore-clients.git"
+synopsis: "low-level libraries for connecting to a xenstore service on a xen host."
+description: """
+These libraries contain the IO functions for communicating with a
+xenstore service on a xen host. One subpackage deals with regular Unix
+threads and another deals with Lwt co-operative threads.
+"""
 
-available: [ ocaml-version >= "4.04.0" ]
