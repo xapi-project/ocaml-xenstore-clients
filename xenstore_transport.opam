@@ -23,13 +23,13 @@ tags: [
   "org:xapi-project"
 ]
 build: [
-  [ "jbuilder" "subst"] {pinned}
-  [ "jbuilder" "build" "-p" name "-j" jobs ]
+  [ "dune" "subst"] {pinned}
+  [ "dune" "build" "-p" name "-j" jobs ]
 ]
 
 depends: [
   "ocamlfind" {build}
-  "jbuilder"  {build & >="1.0+beta9"}
+  "dune"  {build & >= "1.0"}
   "lwt"
   "xenstore" {>= "2.0.0"}
 ]
