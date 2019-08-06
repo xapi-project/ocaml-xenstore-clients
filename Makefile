@@ -1,18 +1,22 @@
+PROFILE=release
 
-.PHONY: build clean test
+.PHONY: build clean test all
 
 build:
-	jbuilder build @install --dev
+	dune build @install --profile=$(PROFILE)
 
 test:
-	jbuilder build --dev test/client_test.exe
-	jbuilder build --dev test/server_test.exe
+	dune build --profile=$(PROFILE) test/client_test.exe
+	dune build --profile=$(PROFILE) test/server_test.exe
+	
+all:
+	dune build @all --profile=$(PROFILE)
 
 install:
-	jbuilder install
+	dune install --profile=$(PROFILE)
 
 uninstall:
-	jbuilder uninstall
+	dune uninstall --profile=$(PROFILE)
 
 clean:
 	rm -rf _build
