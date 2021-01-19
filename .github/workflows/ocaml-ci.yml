@@ -36,9 +36,7 @@ jobs:
           opam install ${{ env.package }} --deps-only --with-test -v
 
       - name: Build
-        run: |
-          opam exec -- make build
+        run: opam exec -- make build
 
-      - name: Run tests
+      - name: Build tests (tests need actual xenstore to run)
         run: opam exec -- make test
-
