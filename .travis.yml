@@ -1,16 +1,16 @@
 language: c
-sudo: false
 services:
   - docker
-install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/master/.travis-docker.sh
+os: linux
+dist: xenial
+install:
+  - wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-docker.sh
+  - wget https://raw.githubusercontent.com/xapi-project/xs-opam/master/tools/xs-opam-ci.env
+  - source xs-opam-ci.env
 script: bash -ex ./.travis-docker.sh
 env:
   global:
-  - PACKAGE="xenstore_transport"
-  - PINS="xenstore_transport:. xenstore-tool:."
-  - DISTRO="debian-stable"
-  matrix:
-  - PACKAGE="xenstore_transport" OCAML_VERSION="4.04"
-  - PACKAGE="xenstore-tool"      OCAML_VERSION="4.04"
-  - PACKAGE="xenstore_transport" OCAML_VERSION="4.07"
-  - PACKAGE="xenstore-tool"      OCAML_VERSION="4.07"
+    - PINS="xenstore_transport:. xenstore-tool:."
+  jobs:
+    - PACKAGE="xenstore_transport"
+    - PACKAGE="xenstore-tool"
