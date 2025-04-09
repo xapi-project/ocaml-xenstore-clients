@@ -17,8 +17,6 @@ open Xs_protocol
 module Client = Xs_client_lwt.Client (Xs_transport_lwt_unix_client)
 open Client
 
-let ( |> ) a b = b a
-
 (* Used for expressing a xenstore 'wait' condition and also in
    the special case of a set of writes (And(Eq, And(Eq, ...))) *)
 type expr =

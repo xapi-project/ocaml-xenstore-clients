@@ -1,6 +1,6 @@
 (executables
  (names xs_client_cli)
- (libraries lwt lwt.unix xenstore xenstore_transport)
+ (libraries camlp-streams lwt lwt.unix xenstore xenstore_transport)
  (flags :standard -safe-string))
 
 (install
