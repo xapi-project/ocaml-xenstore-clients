@@ -40,7 +40,7 @@ let create () =
         raise e
     end
   | _ ->
-    Unix.openfile path [Lwt_unix.O_RDWR] 0o0
+    Unix.openfile path [Unix.O_RDWR] 0o0
 
 let destroy fd = Unix.close fd
 let read fd = Unix.read fd

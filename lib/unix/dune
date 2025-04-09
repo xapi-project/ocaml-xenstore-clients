@@ -1,0 +1,6 @@
+(library
+ (name xenstore_transport_core)
+ (public_name xenstore_transport.unix)
+ (libraries unix)
+ (wrapped false)
+ (flags :standard -safe-string))

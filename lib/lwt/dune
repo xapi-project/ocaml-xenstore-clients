@@ -1,0 +1,7 @@
+(library
+ (name xenstore_transport_lwt)
+ (public_name xenstore_transport.lwt)
+ (libraries lwt xenstore xenstore.client lwt.unix xenstore_transport.unix)
+ (wrapped false)
+ (flags
+  (:standard -safe-string)))
