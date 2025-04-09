@@ -13,11 +13,8 @@
  *)
 
 open Lwt
-open Xs_protocol
 module Client = Xs_client_lwt.Client (Xs_transport_lwt_unix_client)
 open Client
-
-let ( |> ) a b = b a
 
 (* So we can run against a real xenstore, place all nodes in a subtree *)
 let prefix = "/bench"
@@ -49,7 +46,7 @@ module Device = struct
     | "vfs" -> Some Vfs
     | "vfb" -> Some Vfb
     | "vkbd" -> Some Vkbd
-    | x -> None
+    | _ -> None
 
   let string_of_kind = function
     | Vif -> "vif"
@@ -170,12 +167,6 @@ module Device = struct
 
   (* The private data path is only used by xapi and ignored by frontend and backend *)
   let get_private_path domid = Printf.sprintf "%s/%d" private_path domid
-
-  let get_private_data_path_of_device (x : device) =
-    Printf.sprintf "%s/private/%s/%d"
-      (get_private_path x.frontend.domid)
-      (string_of_kind x.backend.kind)
-      x.backend.devid
 
   (* Path in xenstore where we stuff our transient hotplug-related stuff *)
   let get_hotplug_path (x : device) =
@@ -404,8 +395,8 @@ let vm_shutdown domid client =
 let vm_start domid client =
   let vbd devid =
     {
-      Device.frontend = { Device.domid; kind = Device.Vbd; devid = 0 };
-      backend = { Device.domid = 0; kind = Device.Vbd; devid = 0 };
+      Device.frontend = { Device.domid; kind = Device.Vbd; devid };
+      backend = { Device.domid = 0; kind = Device.Vbd; devid };
     }
   in
   Domain.make domid client >>= fun () ->
@@ -486,7 +477,7 @@ let main () =
     (match path with
     | Some path -> Xs_transport.xenstored_socket := path
     | None -> ());
-    let n, args = extract args "-n" in
+    let n, _ = extract args "-n" in
     let n = match n with None -> 300 | Some n -> int_of_string n in
 
     make () >>= fun client ->
