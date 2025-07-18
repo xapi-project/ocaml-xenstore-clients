@@ -157,7 +157,7 @@ let usage () =
       "";
       "Usage:";
       bin
-        " [-path /var/run/xenstored/socket] [-restrict domid] <subcommand> \
+        " [-path /var/run/xenstored/socket] <subcommand> \
          [args]";
       "";
       "Where <subcommand> can be one of:";
@@ -218,22 +218,14 @@ let main () =
     (match path with
     | Some path -> Xs_transport.xenstored_socket := path
     | None -> ());
-    let restrict_domid, args = extract args "-restrict" in
-    let do_restrict xs =
-      match restrict_domid with
-      | Some domid -> restrict xs (int_of_string domid)
-      | None -> return ()
-    in
     match args with
     | [ "read"; key ] ->
         make () >>= fun client ->
         immediate client (fun xs ->
-            do_restrict xs >>= fun () ->
             read xs key >>= fun v -> Lwt_io.write Lwt_io.stdout v)
     | [ "directory"; key ] ->
         make () >>= fun client ->
         immediate client (fun xs ->
-            do_restrict xs >>= fun () ->
             directory xs key >>= fun ls ->
             Lwt_list.iter_s (fun x -> Lwt_io.write Lwt_io.stdout (x ^ "\n")) ls)
     | "write" :: expr ->
@@ -252,12 +244,10 @@ let main () =
         >>= fun items ->
         make () >>= fun client ->
         immediate client (fun xs ->
-            do_restrict xs >>= fun () ->
             Lwt_list.iter_s (fun (k, v) -> write xs k v) items)
     | "debug" :: cmd_args ->
         make () >>= fun client ->
         immediate client (fun xs ->
-            do_restrict xs >>= fun () ->
             debug xs cmd_args >>= fun results ->
             Lwt_list.iter_s
               (fun x -> Lwt_io.write Lwt_io.stdout (x ^ "\n"))
@@ -271,7 +261,6 @@ let main () =
             make () >>= fun client ->
             let result =
               wait client (fun xs ->
-                  do_restrict xs >>= fun () ->
                   eval_expression expr xs >>= fun result ->
                   if not result then fail Eagain else return ())
             in
