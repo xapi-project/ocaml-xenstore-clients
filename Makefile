@@ -9,6 +9,9 @@ test:
 	dune build --profile=$(PROFILE) test/client_test.exe
 	dune build --profile=$(PROFILE) test/server_test.exe
 	
+check:
+	dune build @check
+
 all:
 	dune build @all --profile=$(PROFILE)
 
