@@ -1,3 +1,6 @@
+# v1.5.0 (21-Jul-2025)
+* Remove usage of deprecated 'restrict'
+
 # v1.4.0 (9-Apr-2025)
 * Use ounit2
 * Split lwt code to a different package
